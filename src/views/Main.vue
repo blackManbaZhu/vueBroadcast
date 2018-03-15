@@ -64,11 +64,9 @@
    	import { msgData } from '../api/api';
 	let id = 100;
 	var localData = {
-			//保存  相当于是一个map对象 有key值和value值 
 			save(key,value){
 				localStorage.setItem(key,JSON.stringify(value));
 			},
-			//获取localstorage 中的数据
 			getData(key){
 				return JSON.parse(localStorage.getItem(key)) || [];
 			}
@@ -78,47 +76,6 @@
 		},
 		data () {
 			const data = localData.getData('data-list');
-			// [
-			// 	{
-			// 		id: 1,
-			// 		label: '主机构',
-			// 		children: [
-			// 			{
-			// 				id: 4,
-			// 				label: '二级机构',
-			// 				children: [
-			// 					{
-			// 						id: 9,
-			// 						label: '三级机构'
-			// 					},
-			// 					{
-			// 						id: 10,
-			// 						label: '三级机构'
-			// 					}
-			// 				]
-			// 			}
-			// 		]
-			// 	},
-			// 	{
-			// 		id: 2,
-			// 		label: '主机构',
-			// 		children: [
-			// 			{
-			// 			id: 4,
-			// 			label: '二级机构',
-			// 			children: [
-			// 				{
-			// 					id: 9,
-			// 					label: '三级机构'
-			// 				},
-			// 				{
-			// 					id: 10,
-			// 					label: '三级机构'
-			// 				}
-			// 			]
-			// 		}]
-			// 	}
-			// ];
 			return {
 				childrenData:[],
 				disabl:true,
