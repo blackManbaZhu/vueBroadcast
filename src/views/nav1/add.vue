@@ -1,6 +1,6 @@
 <template>
 	<div>
-		<el-button style="margin-top:15px;" @click="dialogAddVisible = true">添加设备</el-button>
+		<el-button type="primary" style="margin-top:15px;" @click="handleAdd()">添加设备</el-button>
 		<el-table
 			:data="tableData"
 			border
@@ -36,11 +36,11 @@
 					label="操作"
 					width="100">
 					<template slot-scope="scope">
-					<el-tooltip content="编辑设备" placement="top" effect="dark">
-						<el-button type="text" size="small"><i style="font-size:20px;" class="el-icon-edit"></i></el-button>
+					<el-tooltip content="编辑设备" placement="left" effect="dark">
+						<el-button @click="handleEdit(scope.row)" type="text" size="small"><i class="el-icon-edit"></i></el-button>
 					</el-tooltip>
-					<el-tooltip content="删除设备" placement="top" effect="dark">
-						<el-button type="text" size="small"><i style="font-size:20px;" class="el-icon-delete"></i></el-button>
+					<el-tooltip content="删除设备" placement="right" effect="dark">
+						<el-button @click="handleDelete(scope.$index, scope.row)" type="text" size="small"><i style="fon-size:18px;" class="el-icon-delete"></i></el-button>
 					</el-tooltip>
 					</template>
 				</el-table-column>
@@ -54,7 +54,7 @@
 			:total="pageInfo.total">
 		</el-pagination>
 		<!-- 添加设备 弹窗 -->
-		<el-dialog title="添加设备" :visible.sync="dialogAddVisible">
+		<el-dialog :title="title" :visible.sync="dialogAddVisible">
 			<el-form :model="form" :rules="rules" ref="form" :label-position="'right'">
 				<el-row :gutter="60">
 					<el-col :span="8">
@@ -77,8 +77,8 @@
 						<div class="grid-content bg-purple">
 							<el-form-item label="网络类型" :label-width="formLabelWidth" prop="networkType">
 								<el-select v-model="form.networkType" placeholder="请选择网络类型">
-									<el-option label="无线" value="wuxian"></el-option>
-									<el-option label="有线" value="youxian"></el-option>
+									<el-option label="无线" value="无线"></el-option>
+									<el-option label="有线" value="有线"></el-option>
 								</el-select>
     						</el-form-item>
 						</div>
@@ -101,10 +101,11 @@
 								<el-input @blur="verifyLine" v-model="form.lineEnd" auto-complete="off"></el-input>
 							</el-form-item>
 							<el-form-item label="" :label-width="formLabelWidth">
-								<el-button type="primary" plain>选择</el-button>
+								<el-button @click="handlePoint()" type="primary" plain>打开地图选择</el-button>
 							</el-form-item>
 						</div>
 					</el-col>
+					<div id="allmap" v-show="MapShow"></div>
 				</el-row>
 				<el-row :gutter="60">
 					<el-col :span="8">
@@ -133,21 +134,20 @@
 	import { msgData } from '../../api/api';
 	let verify = {
 		phone (number){
-			console.log(number)
 			var flag;
 			var myreg = /^[1][1,2,3,4,5,7,8,9][0-9]{9}$/;  
-			if (!myreg.test(number)) {  
-				return false;  
+			if (!myreg.test(number) && number != ''){  
+				flag = false;  
 			} else {  
-				return  true;  
+				flag =  true;  
 			}
-			// return flag;
+			return flag;
 		},
 		//经度
 		lineStart(number){
 			var flag;
-			var myreg = /^[\-\+]?(0?\d{1,2}\.\d{1,5}|1[0-7]?\d{1}\.\d{1,5}|180\.0{1,5})$/;
-			if (!myreg.test(number)) {  
+			var myreg = /^-?(?:(?:180(?:\.0{1,5})?)|(?:(?:(?:1[0-7]\d)|(?:[1-9]?\d))(?:\.\d{1,6})?))$/;
+			if (!myreg.test(number) && number != '') {  
 				flag = false;  
 			} else {  
 				flag = true;  
@@ -157,217 +157,40 @@
 		//纬度
 		lineEnd(number){
 			var flag;
-			var myreg = /^[\-\+]?([0-8]?\d{1}\.\d{1,5}|90\.0{1,5})$/;
-			if (!myreg.test(number)) {  
+			var myreg = /^-?(?:90(?:\.0{1,5})?|(?:[1-8]?\d(?:\.\d{1,6})?))$/;
+			if (!myreg.test(number) && number != '') {  
 				flag = false;  
 			} else {  
 				flag = true;  
 			}
 			return flag;
 		}
-	}
-	let testList = [
-					{
-						id:'1',
-						number: '001',
-						name: '设备1',
-						networkType: '有线',
-						phone:'18079071115',
-						lineStart:'23.03',
-						lineEnd:'113.75',
-						tissue:'机构1'
-					}, 
-					{
-						id:'2',
-						number: '002',
-						name: '设备2',
-						networkType: '无线',
-						phone:'18079071115',
-						lineStart:'23.03',
-						lineEnd:'113.75',
-						tissue:'机构1'
-					}, 
-					{
-						id:'3',
-						number: '003',
-						name: '设备3',
-						networkType: '无线',
-						phone:'18079071115',
-						lineStart:'23.03',
-						lineEnd:'113.75',
-						tissue:'机构1'
-					}, 
-					{
-						id:'4',
-						number: '004',
-						name: '设备4',
-						networkType: '无线',
-						phone:'18079071115',
-						lineStart:'23.03',
-						lineEnd:'113.75',
-						tissue:'机构1'
-					}, 
-					{
-						id:'5',
-						number: '005',
-						name: '设备005',
-						networkType: '无线',
-						phone:'18079071115',
-						lineStart:'23.03',
-						lineEnd:'113.75',
-						tissue:'机构1'
-					}, 
-					{
-						id:'4',
-						number: '006',
-						name: '设备006',
-						networkType: '无线',
-						phone:'18079071115',
-						lineStart:'23.03',
-						lineEnd:'113.75',
-						tissue:'机构1'
-					}, 
-					{
-						id:'4',
-						number: '007',
-						name: '设备007',
-						networkType: '无线',
-						phone:'18079071115',
-						lineStart:'23.03',
-						lineEnd:'113.75',
-						tissue:'机构1'
-					}, 
-					{
-						id:'4',
-						number: '008',
-						name: '设备008',
-						networkType: '无线',
-						phone:'18079071115',
-						lineStart:'23.03',
-						lineEnd:'113.75',
-						tissue:'机构1'
-					}, 
-					{
-						id:'4',
-						number: '009',
-						name: '设备009',
-						networkType: '无线',
-						phone:'18079071115',
-						lineStart:'23.03',
-						lineEnd:'113.75',
-						tissue:'机构1'
-					}, 
-					{
-						id:'4',
-						number: '010',
-						name: '设备010',
-						networkType: '无线',
-						phone:'18079071115',
-						lineStart:'23.03',
-						lineEnd:'113.75',
-						tissue:'机构1'
-					}, 
-					{
-						id:'4',
-						number: '011',
-						name: '设备011',
-						networkType: '无线',
-						phone:'18079071115',
-						lineStart:'23.03',
-						lineEnd:'113.75',
-						tissue:'机构1'
-					}, 
-					{
-						id:'4',
-						number: '012',
-						name: '设备012',
-						networkType: '无线',
-						phone:'18079071115',
-						lineStart:'23.03',
-						lineEnd:'113.75',
-						tissue:'机构1'
-					}, 
-					{
-						id:'4',
-						number: '013',
-						name: '设备013',
-						networkType: '无线',
-						phone:'18079071115',
-						lineStart:'23.03',
-						lineEnd:'113.75',
-						tissue:'机构1'
-					},
-					{
-						id:'4',
-						number: '014',
-						name: '设备014',
-						networkType: '无线',
-						phone:'18079071115',
-						lineStart:'23.03',
-						lineEnd:'113.75',
-						tissue:'机构1'
-					},
-					{
-						id:'4',
-						number: '015',
-						name: '设备015',
-						networkType: '无线',
-						phone:'18079071115',
-						lineStart:'23.03',
-						lineEnd:'113.75',
-						tissue:'机构1'
-					},
-					{
-						id:'4',
-						number: '016',
-						name: '设备016',
-						networkType: '无线',
-						phone:'18079071115',
-						lineStart:'23.03',
-						lineEnd:'113.75',
-						tissue:'机构1'
-					},
-					{
-						id:'4',
-						number: '017',
-						name: '设备017',
-						networkType: '无线',
-						phone:'18079071115',
-						lineStart:'23.03',
-						lineEnd:'113.75',
-						tissue:'机构1'
-					},
-					{
-						id:'4',
-						number: '018',
-						name: '设备018',
-						networkType: '无线',
-						phone:'18079071115',
-						lineStart:'23.03',
-						lineEnd:'113.75',
-						tissue:'机构1'
-					},
-					{
-						id:'4',
-						number: '019',
-						name: '设备19',
-						networkType: '无线',
-						phone:'18079071115',
-						lineStart:'23.03',
-						lineEnd:'113.75',
-						tissue:'机构1'
-					}
-				]
+	};
+	var localData = {
+		save(key,value){
+			sessionStorage.setItem(key,JSON.stringify(value));
+		},
+		getData(key){
+			return JSON.parse(sessionStorage.getItem(key)) || [];
+		}
+	}	
+	let data = localData.getData('testList');
 	export default {
 		 data() {
-			const total       = testList.length;
-			const currentPage = Math.floor(total/10); 
+			const total       = data.length;
 			return {
 				formLabelWidth:'80px',
 				dialogAddVisible:false,
+				MapShow:false,
+				tableData: data,
+				tableBefore:[],
+				currentPage:'',
+				title:'',
+				editIndex:'',
+				editObj:'',
 				pageInfo:{
 					total:total,
-					currentPage: currentPage,
+					// currentPage: currentPage,
 				},
 				form:{
 					number: '',
@@ -378,7 +201,6 @@
 					lineEnd:'',
 					tissue:[]
 				},
-				tableData: testList,
 				options: [{
 					value: '机构一',
 					label: '机构一',
@@ -423,35 +245,91 @@
 			}
 		},
 		created() {
-			this.tableData = testList.slice(0,10);
+			this.tableData = data.slice(0,10);
 		},
+		watch:{
+				//深监控
+				tableData:{
+					handler() {
+						localData.save("testList",this.tableData);
+					},
+					deep:true
+				},
+				tableBefore:{
+					handler() {
+						this.tableData = this.tableBefore.slice(0,10);
+					}
+				}
+			},
 		methods: {
 			handleCurrentChange(val) {
-				console.log(`当前页: ${val}`);
+				this.currentPage = val;
+				// console.log(`当前页: ${val}`);
 				const countStart = val*10 -10;
         		const countEnd   = val*10;
-				this.tableData= testList.slice(countStart,countEnd)
+				this.tableData   = data.slice(countStart,countEnd);
+			},
+			handleAdd() {
+				this.dialogAddVisible = true;
+				this.MapShow = false;
+				this.title = "添加设备";
+				this.form = {};
+				this.form.phone = '';
+				this.form.lineStart = '';
+				this.form.lineEnd = '';
+			},
+			handleEdit(row) {
+				this.editObj = row;
+				this.dialogAddVisible = true;
+				this.MapShow = false;
+				this.title = "编辑设备";
+				this.form.number = row.number;
+				this.form.name   = row.name;
+				this.form.networkType = row.networkType;
+				this.form.phone = row.phone;
+				this.form.lineStart = row.lineStart;
+				this.form.lineEnd   = row.lineEnd;
+				this.form.tissue = row.tissue;
 			},
 			Save(form) {
 				this.$refs[form].validate((valid) => {
 					let flag1= verify.phone(this.form.phone);
 					let flag2= verify.lineStart(this.form.lineStart);
 					let flag3= verify.lineEnd(this.form.lineEnd);
-					console.log(flag1)
-					if (valid && flag1 && flag2 && flag3) {
-						testList.push({
-							number: this.form.number,
-							name: this.form.name,
-							networkType: this.form.networkType,
-							phone:this.form.phone,
-							lineStart:this.form.lineStart,
-							lineEnd:this.form.lineEnd,
-							tissue:this.form.tissue
-						})
-						this.tableData = testList.slice(0,10);
-						this.pageInfo.total = testList.length;
-						this.dialogAddVisible = false;
-						this.form = {};
+					if (valid) {
+						if( !flag1 ) {
+							this.$message.error('手机号格式不正确！！！');
+							return false;
+						}
+						if( !flag2 && !flag3 ){
+							this.$message.error('经纬度格式不正确！！！');
+							return false;
+						}
+						if(this.title == '添加设备'){
+							this.tableData.push({
+								number: this.form.number,
+								name: this.form.name,
+								networkType: this.form.networkType,
+								phone:this.form.phone,
+								lineStart:this.form.lineStart,
+								lineEnd:this.form.lineEnd,
+								tissue:this.form.tissue
+							})
+							this.pageInfo.total = this.tableData.length;
+							this.dialogAddVisible = false;
+							this.form = {};
+							this.form.phone = ''
+						}else if(this.title == "编辑设备") {
+							this.editObj.number = this.form.number;
+							this.editObj.name = this.form.name;
+							this.editObj.networkType = this.form.networkType;
+							this.editObj.phone = this.form.phone;
+							this.editObj.lineStart = this.form.lineStart;
+							this.editObj.lineEnd = this.form.lineEnd;
+							this.editObj.tissue = this.form.tissue;
+							this.dialogAddVisible = false;
+						}
+						this.MapShow = false;
 					} else {
 						console.log('error submit!!');
 						return false;
@@ -473,7 +351,38 @@
 				if(!flag2){
 					this.$message.error('纬度格式不正确！！！');
 				}
+			},
+			handleDelete(index, row) {
+				let idx = data.indexOf(row);
+				data.splice(idx,1);
+				this.tableBefore    = data;
+				this.pageInfo.total = data.length;
+				if(this.currentPage > 1) {
+					const countStart = this.currentPage*10 -10;
+        			const countEnd   = this.currentPage*10;
+					this.tableBefore = data.slice(countStart,countEnd)
+				}
+			 },
+			handlePoint() {
+				// 百度地图API功能
+				this.MapShow = true;
+				var _this = this;
+				var map = new BMap.Map("allmap");
+				var point = new BMap.Point(118.803625,32.04);
+				map.centerAndZoom(point,12);
+				var geoc = new BMap.Geocoder();    
+				map.addEventListener("click", function(e){        
+					var pt = e.point;
+					console.log(pt); 
+					_this.MapShow = false; 
+					_this.form.lineStart = pt['lng'];   
+					_this.form.lineEnd = pt["lat"];
+				});
 			}
 		},
 	}
 </script>
+ <style>
+	#allmap {width:100%;height:500px;}
+ </style>
+ 

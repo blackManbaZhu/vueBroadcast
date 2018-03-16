@@ -34,12 +34,11 @@ let routes = [
     {
         path: '/',
         component: Home,
-        leaf: false,
+        leaf: true,
         name: '设备管理',
         icon: 'fa fa-windows',
         children: [
-            { path: '/computer-maintain', component: Table, name: '添加设备' },
-            { path: '/computer-config', component: Form, name: '编辑设备' },
+            { path: '/addEdit', component: Table, name: '添加设备' },
         ]
     },
     {
